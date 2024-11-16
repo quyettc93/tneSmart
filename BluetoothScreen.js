@@ -11,6 +11,7 @@ import {
   TextInput,
 } from "react-native";
 import RNBluetoothClassic from "react-native-bluetooth-classic";
+import buttonData from "./buttonData.json"; // Import the custom button data
 
 // Log the RNBluetoothClassic module to see its available functions
 console.log("ok1");
@@ -58,6 +59,7 @@ const BluetoothScreen = () => {
   const [connected, setConnected] = useState(false);
   const [data, setData] = useState("");
   const [connectedDevice, setConnectedDevice] = useState(null);
+  const [buttonCount, setButtonCount] = useState(0);
 
   useEffect(() => {
     const init = async () => {
@@ -93,6 +95,7 @@ const BluetoothScreen = () => {
       setConnectedDevice(device);
       if (connected) {
         Alert.alert("Connected", `Connected to ${device.name}`);
+        setDevices([device]); // Hide all devices except the connected one
       } else {
         Alert.alert("Connection failed", `Failed to connect to ${device.name}`);
       }
@@ -102,15 +105,15 @@ const BluetoothScreen = () => {
     }
   };
 
-  const sendData = async () => {
+  const sendData = async (buttonKey) => {
     if (connectedDevice) {
       try {
-        const dataWithLineBreak = data + "\n"; // Append a newline character
-        await RNBluetoothClassic.writeToDevice(
-          connectedDevice.id,
-          dataWithLineBreak
+        const dataToSend = buttonData[buttonKey] + "\n"; // Append a newline character
+        await RNBluetoothClassic.writeToDevice(connectedDevice.id, dataToSend);
+        Alert.alert(
+          "Data Sent",
+          `Data sent to ${connectedDevice.name}: ${dataToSend}`
         );
-        Alert.alert("Data Sent", `Data sent to ${connectedDevice.name}`);
       } catch (error) {
         console.error("Send Error:", error);
         Alert.alert("Error", "An error occurred while sending data");
@@ -126,6 +129,7 @@ const BluetoothScreen = () => {
         padding: 10,
         borderBottomWidth: 1,
         borderBottomColor: "#ccc",
+        backgroundColor: item.id === connectedDevice?.id ? "green" : "white",
       }}
       onPress={() => connectToDevice(item)}
     >
@@ -134,10 +138,27 @@ const BluetoothScreen = () => {
     </TouchableOpacity>
   );
 
+  const renderButtons = () => {
+    const buttons = [];
+    for (let i = 1; i <= buttonCount && i <= 8; i++) {
+      const buttonKey = `button${i}`;
+      buttons.push(
+        <Button
+          key={i}
+          title={`Call Car ${i}`}
+          onPress={() => sendData(buttonKey)}
+        />
+      );
+    }
+    return buttons;
+  };
+
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>Search and Connect to Bluetooth Devices</Text>
-      <Button title="Scan for Devices" onPress={scanForDevices} />
+      {!connected && (
+        <Button title="Scan for Devices" onPress={scanForDevices} />
+      )}
       <FlatList
         data={devices}
         keyExtractor={(item) => item.id}
@@ -147,9 +168,12 @@ const BluetoothScreen = () => {
       {connected && (
         <View style={{ marginTop: 20, width: "80%" }}>
           <TextInput
-            placeholder="Enter data to send"
-            value={data}
-            onChangeText={setData}
+            placeholder="Enter number of buttons (max 8)"
+            keyboardType="numeric"
+            value={buttonCount.toString()}
+            onChangeText={(text) =>
+              setButtonCount(Math.min(parseInt(text) || 0, 8))
+            }
             style={{
               height: 40,
               borderColor: "gray",
@@ -158,7 +182,7 @@ const BluetoothScreen = () => {
               paddingHorizontal: 10,
             }}
           />
-          <Button title="Send" onPress={sendData} />
+          {renderButtons()}
         </View>
       )}
     </View>
