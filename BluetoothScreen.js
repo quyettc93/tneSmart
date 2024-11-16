@@ -60,6 +60,7 @@ const BluetoothScreen = () => {
   const [data, setData] = useState("");
   const [connectedDevice, setConnectedDevice] = useState(null);
   const [buttonCount, setButtonCount] = useState(0);
+  const [sentData, setSentData] = useState(""); // State to store the sent data
 
   useEffect(() => {
     const init = async () => {
@@ -110,10 +111,7 @@ const BluetoothScreen = () => {
       try {
         const dataToSend = buttonData[buttonKey] + "\n"; // Append a newline character
         await RNBluetoothClassic.writeToDevice(connectedDevice.id, dataToSend);
-        Alert.alert(
-          "Data Sent",
-          `Data sent to ${connectedDevice.name}: ${dataToSend}`
-        );
+        setSentData(dataToSend); // Update the sent data state
       } catch (error) {
         console.error("Send Error:", error);
         Alert.alert("Error", "An error occurred while sending data");
@@ -145,7 +143,7 @@ const BluetoothScreen = () => {
       buttons.push(
         <Button
           key={i}
-          title={`Call Car ${i}`}
+          title={`Button ${i}`}
           onPress={() => sendData(buttonKey)}
         />
       );
@@ -183,6 +181,18 @@ const BluetoothScreen = () => {
             }}
           />
           {renderButtons()}
+          {sentData && (
+            <View
+              style={{
+                marginTop: 20,
+                padding: 10,
+                backgroundColor: "#e0e0e0",
+                borderRadius: 5,
+              }}
+            >
+              <Text>Data Sent: {sentData}</Text>
+            </View>
+          )}
         </View>
       )}
     </View>
