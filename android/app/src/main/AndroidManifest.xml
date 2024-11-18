@@ -1,7 +1,6 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"  xmlns:tools="http://schemas.android.com/tools" package="com.quyet.bluetoothapp">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" package="com.quyet.bluetoothapp">
 
-  <!-- <uses-permission-sdk-23 android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-  <uses-permission-sdk-23 android:name="android.permission.ACCESS_FINE_LOCATION"/> -->
+  <!-- Existing permissions -->
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
   <uses-permission android:name="android.permission.BLUETOOTH"/>
@@ -9,15 +8,17 @@
   <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
   <uses-permission android:name="android.permission.BLUETOOTH_SCAN" tools:targetApi="31"/>
   <uses-permission android:name="android.permission.INTERNET"/>
-  <!-- <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/> -->
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
-  <!-- <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/> -->
-  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />  
-  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+
+  <!-- Add camera permission and feature -->
+  <uses-permission android:name="android.permission.CAMERA"/>
+  <uses-feature android:name="android.hardware.camera" android:required="false"/>
 
   <queries>
     <intent>
