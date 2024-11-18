@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Button, Alert, StyleSheet } from "react-native";
 import { Camera } from "expo-camera";
+import CameraView from "expo-camera-view"; // Assuming CameraView is a valid import
 
 const BluetoothScreen = () => {
   const [hasPermission, setHasPermission] = useState(null);
@@ -29,16 +30,20 @@ const BluetoothScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Camera
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+      <CameraView
         style={StyleSheet.absoluteFillObject}
-        barCodeScannerSettings={{
-          barCodeTypes: [Camera.Constants.BarCodeType.qr],
-        }}
-      />
-      {scanned && (
-        <Button title={"Tap to Scan Again"} onPress={() => setScanned(false)} />
-      )}
+        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+      >
+        <View style={styles.overlay}>
+          <Text style={styles.text}>Scan QR Code</Text>
+          {scanned && (
+            <Button
+              title={"Tap to Scan Again"}
+              onPress={() => setScanned(false)}
+            />
+          )}
+        </View>
+      </CameraView>
     </View>
   );
 };
@@ -48,6 +53,16 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "column",
     justifyContent: "center",
+  },
+  overlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  text: {
+    fontSize: 18,
+    color: "white",
   },
 });
 
