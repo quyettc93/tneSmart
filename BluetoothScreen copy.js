@@ -7,13 +7,16 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
-import { Camera, useCameraPermissions } from "expo-camera";
-
-console.log(Camera);
+import { Camera } from "expo-camera";
 
 const BluetoothScreen = () => {
-  const [permission, requestPermission] = useCameraPermissions();
+  const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
+
+  const requestCameraPermission = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    setHasPermission(status === "granted");
+  };
 
   const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true);
@@ -22,30 +25,29 @@ const BluetoothScreen = () => {
     );
   };
 
-  if (!permission) {
-    // Camera permissions are still loading.
-    return <View />;
-  }
-
-  if (!permission.granted) {
-    // Camera permissions are not granted yet.
+  if (hasPermission === null) {
     return (
       <View style={styles.container}>
-        <Text style={styles.message}>
-          We need your permission to show the camera
-        </Text>
-        <Button onPress={requestPermission} title="Grant Permission" />
+        <Text>Requesting for camera permission...</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={requestCameraPermission}
+        >
+          <Text style={styles.buttonText}>Request Camera Permission</Text>
+        </TouchableOpacity>
       </View>
     );
+  }
+  if (hasPermission === false) {
+    return <Text>No access to camera</Text>;
   }
 
   return (
     <View style={styles.container}>
       <Camera
-        // type={Camera.Constants.Type.back}
         onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
         style={StyleSheet.absoluteFillObject}
-        barCodeTypes={["qr"]}
+        barCodeTypes={["qr"]} // Chỉ quét mã QR
       />
       {scanned && (
         <View style={styles.buttonContainer}>
@@ -65,16 +67,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  message: {
-    textAlign: "center",
-    paddingBottom: 10,
-  },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 20,
-    left: "50%",
-    transform: [{ translateX: -75 }],
-  },
   button: {
     backgroundColor: "#0E7AFE",
     paddingVertical: 15,
@@ -87,10 +79,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
   },
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "white",
+  buttonContainer: {
+    position: "absolute",
+    bottom: 20,
+    left: "50%",
+    transform: [{ translateX: -75 }],
   },
 });
 
