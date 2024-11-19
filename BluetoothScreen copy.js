@@ -1,90 +1,57 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Button,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
-import { Camera } from "expo-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { useState } from "react";
+import { Button, StyleSheet, Text, View, Alert } from "react-native";
 
-const BluetoothScreen = () => {
-  const [hasPermission, setHasPermission] = useState(null);
+export default function Appf() {
+  const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
 
-  const requestCameraPermission = async () => {
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    setHasPermission(status === "granted");
-  };
+  if (!permission) {
+    // Đang tải quyền truy cập camera
+    return <View />;
+  }
 
-  const handleBarCodeScanned = ({ type, data }) => {
-    setScanned(true);
-    Alert.alert(
-      `Bar code with type ${type} and data ${data} has been scanned!`
-    );
-  };
-
-  if (hasPermission === null) {
+  if (!permission.granted) {
+    // Chưa cấp quyền truy cập camera
     return (
       <View style={styles.container}>
-        <Text>Requesting for camera permission...</Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={requestCameraPermission}
-        >
-          <Text style={styles.buttonText}>Request Camera Permission</Text>
-        </TouchableOpacity>
+        <Text style={styles.message}>
+          We need your permission to show the camera
+        </Text>
+        <Button onPress={requestPermission} title="Grant Permission" />
       </View>
     );
   }
-  if (hasPermission === false) {
-    return <Text>No access to camera</Text>;
-  }
+
+  const handleBarcodeScanned = ({ type, data }) => {
+    setScanned(true);
+    Alert.alert("Scanned!", `Type: ${type}\nData: ${data}`);
+  };
 
   return (
     <View style={styles.container}>
-      <Camera
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-        style={StyleSheet.absoluteFillObject}
-        barCodeTypes={["qr"]} // Chỉ quét mã QR
+      <CameraView
+        style={styles.camera}
+        facing="back"
+        onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
       />
       {scanned && (
-        <View style={styles.buttonContainer}>
-          <Button
-            title={"Tap to Scan Again"}
-            onPress={() => setScanned(false)}
-          />
-        </View>
+        <Button title="Scan Again" onPress={() => setScanned(false)} />
       )}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
   },
-  button: {
-    backgroundColor: "#0E7AFE",
-    paddingVertical: 15,
-    paddingHorizontal: 25,
-    borderRadius: 5,
-    marginTop: 20,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
+  message: {
     textAlign: "center",
+    paddingBottom: 10,
   },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 20,
-    left: "50%",
-    transform: [{ translateX: -75 }],
+  camera: {
+    flex: 1,
   },
 });
-
-export default BluetoothScreen;

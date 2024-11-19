@@ -1,130 +1,63 @@
-import React, { useState, useEffect } from "react";
-<<<<<<< HEAD
-import {
-  View,
-  Text,
-  Button,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
-import { Camera, useCameraPermissions } from "expo-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { useState } from "react";
+import { Button, StyleSheet, Text, View, Alert } from "react-native";
 
-console.log(Camera);
-=======
-import { View, Text, Button, Alert, StyleSheet } from "react-native";
-import { Camera } from "expo-camera";
-import CameraView from "expo-camera-view"; // Assuming CameraView is a valid import
->>>>>>> 85149b3028883fd6ec436680d778dc6aac3ab87f
-
-const BluetoothScreen = () => {
+export default function BluetoothScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  const [cameraEnabled, setCameraEnabled] = useState(false); // Trạng thái bật camera
 
-  const handleBarCodeScanned = ({ type, data }) => {
-    setScanned(true);
-    Alert.alert(
-      `Bar code with type ${type} and data ${data} has been scanned!`
-    );
+  const handlePermissionRequest = () => {
+    requestPermission().then(() => {
+      if (permission.granted) {
+        setCameraEnabled(true); // Nếu quyền được cấp, bật camera
+      }
+    });
   };
 
-  if (!permission) {
-    // Camera permissions are still loading.
-    return <View />;
-  }
+  const handleBarcodeScanned = ({ type, data }) => {
+    setScanned(true);
+    Alert.alert("Scanned!", `Type: ${type}\nData: ${data}`);
+  };
 
-  if (!permission.granted) {
-    // Camera permissions are not granted yet.
+  if (!cameraEnabled) {
     return (
       <View style={styles.container}>
         <Text style={styles.message}>
           We need your permission to show the camera
         </Text>
-        <Button onPress={requestPermission} title="Grant Permission" />
+        <Button
+          onPress={handlePermissionRequest}
+          title="Grant Camera Permission"
+        />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-<<<<<<< HEAD
-      <Camera
-        // type={Camera.Constants.Type.back}
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-        style={StyleSheet.absoluteFillObject}
-        barCodeTypes={["qr"]}
+      <CameraView
+        style={styles.camera}
+        facing="back"
+        onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
       />
       {scanned && (
-        <View style={styles.buttonContainer}>
-          <Button
-            title={"Tap to Scan Again"}
-            onPress={() => setScanned(false)}
-          />
-        </View>
+        <Button title="Scan Again" onPress={() => setScanned(false)} />
       )}
-=======
-      <CameraView
-        style={StyleSheet.absoluteFillObject}
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-      >
-        <View style={styles.overlay}>
-          <Text style={styles.text}>Scan QR Code</Text>
-          {scanned && (
-            <Button
-              title={"Tap to Scan Again"}
-              onPress={() => setScanned(false)}
-            />
-          )}
-        </View>
-      </CameraView>
->>>>>>> 85149b3028883fd6ec436680d778dc6aac3ab87f
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
   },
   message: {
     textAlign: "center",
     paddingBottom: 10,
   },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 20,
-    left: "50%",
-    transform: [{ translateX: -75 }],
-  },
-  button: {
-    backgroundColor: "#0E7AFE",
-    paddingVertical: 15,
-    paddingHorizontal: 25,
-    borderRadius: 5,
-    marginTop: 20,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    textAlign: "center",
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "white",
-  },
-  overlay: {
+  camera: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  text: {
-    fontSize: 18,
-    color: "white",
   },
 });
-//
-export default BluetoothScreen;
