@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+<<<<<<< HEAD
 import {
   View,
   Text,
@@ -10,6 +11,11 @@ import {
 import { Camera, useCameraPermissions } from "expo-camera";
 
 console.log(Camera);
+=======
+import { View, Text, Button, Alert, StyleSheet } from "react-native";
+import { Camera } from "expo-camera";
+import CameraView from "expo-camera-view"; // Assuming CameraView is a valid import
+>>>>>>> 85149b3028883fd6ec436680d778dc6aac3ab87f
 
 const BluetoothScreen = () => {
   const [permission, requestPermission] = useCameraPermissions();
@@ -41,6 +47,7 @@ const BluetoothScreen = () => {
 
   return (
     <View style={styles.container}>
+<<<<<<< HEAD
       <Camera
         // type={Camera.Constants.Type.back}
         onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
@@ -55,6 +62,22 @@ const BluetoothScreen = () => {
           />
         </View>
       )}
+=======
+      <CameraView
+        style={StyleSheet.absoluteFillObject}
+        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+      >
+        <View style={styles.overlay}>
+          <Text style={styles.text}>Scan QR Code</Text>
+          {scanned && (
+            <Button
+              title={"Tap to Scan Again"}
+              onPress={() => setScanned(false)}
+            />
+          )}
+        </View>
+      </CameraView>
+>>>>>>> 85149b3028883fd6ec436680d778dc6aac3ab87f
     </View>
   );
 };
@@ -90,6 +113,16 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 24,
     fontWeight: "bold",
+    color: "white",
+  },
+  overlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  text: {
+    fontSize: 18,
     color: "white",
   },
 });
