@@ -13,7 +13,6 @@ export default function App() {
   const [isConnected, setIsConnected] = useState(false); // Correctly managing connection state
   const [buttonCount, setButtonCount] = useState(0);
   const [macAddress, setMacAddress] = useState(""); // MAC address of the Bluetooth device
-  const [sentData, setSentData] = useState(""); // New state to store the sent data
 
   // Bluetooth connection logic
   const requestBluetoothPermissions = async () => {
@@ -130,7 +129,7 @@ export default function App() {
 
       RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
         .then(() => {
-          setSentData(dataToSend); // Store the sent data in the state
+          Alert.alert(`Sent: ${dataToSend}`);
         })
         .catch((error) => {
           console.error("Send Error:", error);
@@ -169,14 +168,6 @@ export default function App() {
                     onPress={() => handleButtonPress(i + 1)}
                   />
                 ))}
-                {/* Display sent data */}
-                {sentData && (
-                  <View style={styles.sentDataContainer}>
-                    <Text style={styles.sentDataText}>
-                      Sent Data: {sentData}
-                    </Text>
-                  </View>
-                )}
               </View>
             )}
           </View>
@@ -223,6 +214,4 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-  sentDataContainer: { marginTop: 20 },
-  sentDataText: { fontSize: 16, fontWeight: "normal", color: "green" },
 });

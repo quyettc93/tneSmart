@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Button, View, Text, Alert, TextInput, StyleSheet } from "react-native";
 import RNBluetoothClassic from "react-native-bluetooth-classic";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import buttonData from "./buttonData.json"; // Import the custom button data
 
 // QR scanner and Bluetooth handler
 export default function App() {
@@ -13,7 +12,6 @@ export default function App() {
   const [isConnected, setIsConnected] = useState(false); // Correctly managing connection state
   const [buttonCount, setButtonCount] = useState(0);
   const [macAddress, setMacAddress] = useState(""); // MAC address of the Bluetooth device
-  const [sentData, setSentData] = useState(""); // New state to store the sent data
 
   // Bluetooth connection logic
   const requestBluetoothPermissions = async () => {
@@ -102,7 +100,7 @@ export default function App() {
       Alert.alert("Error", "An error occurred while connecting to the device");
     }
   };
-
+  //////////
   const handlePermissionRequest = () => {
     requestPermission().then(() => {
       if (permission.granted) {
@@ -125,12 +123,13 @@ export default function App() {
 
   const handleButtonPress = (buttonNumber) => {
     if (isConnected) {
-      const buttonKey = `button${buttonNumber}`; // Example: button1, button2, ...
-      const dataToSend = buttonData[buttonKey] + "\n"; // Retrieve the corresponding data from buttonData.json
-
-      RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
+      // Send data to the device via MAC address using writeToDevice
+      RNBluetoothClassic.writeToDevice(
+        macAddress,
+        `Button ${buttonNumber} pressed`
+      )
         .then(() => {
-          setSentData(dataToSend); // Store the sent data in the state
+          Alert.alert(`Sent: Button ${buttonNumber}`);
         })
         .catch((error) => {
           console.error("Send Error:", error);
@@ -169,14 +168,6 @@ export default function App() {
                     onPress={() => handleButtonPress(i + 1)}
                   />
                 ))}
-                {/* Display sent data */}
-                {sentData && (
-                  <View style={styles.sentDataContainer}>
-                    <Text style={styles.sentDataText}>
-                      Sent Data: {sentData}
-                    </Text>
-                  </View>
-                )}
               </View>
             )}
           </View>
@@ -223,6 +214,4 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-  sentDataContainer: { marginTop: 20 },
-  sentDataText: { fontSize: 16, fontWeight: "normal", color: "green" },
 });
