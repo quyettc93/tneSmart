@@ -1,16 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { Button, View, Text, Alert, TextInput, StyleSheet } from "react-native";
-import RNBluetoothClassic from "react-native-bluetooth-classic";
+import { useEffect, useState } from "react";
+import {
+  Button,
+  StyleSheet,
+  Text,
+  View,
+  Alert,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import RNBluetoothClassic from "react-native-bluetooth-classic";
+import { PermissionsAndroid, Platform } from "react-native";
 
-// QR scanner and Bluetooth handler
+// Đoạn mã quét QR
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [idDeviceAddPass, setIdDeviceAddPass] = useState(null);
-  const [isConnected, setIsConnected] = useState(false); // Correctly managing connection state
-  const [buttonCount, setButtonCount] = useState(0);
 
   const handlePermissionRequest = () => {
     requestPermission().then(() => {
@@ -24,29 +32,11 @@ export default function App() {
     setScanned(true);
     try {
       const parsedData = JSON.parse(data);
-      setIdDeviceAddPass(parsedData); // Save QR data
-      setCameraEnabled(false); // Turn off camera after scan
-      scanForDevices(parsedData.name); // Start scanning for devices after scanning QR code
+      setIdDeviceAddPass(parsedData); // Lưu dữ liệu QR
+      setCameraEnabled(false); // Tắt camera sau khi quét
+      scanForDevices(parsedData.name); // Tìm thiết bị khi quét QR thành công
     } catch (error) {
       Alert.alert("Error", "Invalid QR Code data");
-    }
-  };
-
-  const handleButtonPress = (buttonNumber) => {
-    if (isConnected) {
-      RNBluetoothClassic.write(`Button ${buttonNumber} pressed`)
-        .then(() => {
-          Alert.alert(`Sent: Button ${buttonNumber}`);
-        })
-        .catch((error) => {
-          console.error("Send Error:", error);
-          Alert.alert("Error", "Failed to send data");
-        });
-    } else {
-      Alert.alert(
-        "Bluetooth not connected",
-        "Please connect to a Bluetooth device first."
-      );
     }
   };
 
@@ -59,24 +49,6 @@ export default function App() {
             <Text style={styles.resultText}>
               Password: {idDeviceAddPass.pass}
             </Text>
-            {isConnected && (
-              <View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter number of buttons"
-                  keyboardType="numeric"
-                  onChangeText={(text) => setButtonCount(Number(text))}
-                  value={buttonCount > 0 ? buttonCount.toString() : ""}
-                />
-                {Array.from({ length: buttonCount }, (_, i) => (
-                  <Button
-                    key={i}
-                    title={`Button ${i + 1}`}
-                    onPress={() => handleButtonPress(i + 1)}
-                  />
-                ))}
-              </View>
-            )}
           </View>
         ) : (
           <View>
@@ -113,19 +85,10 @@ const styles = StyleSheet.create({
   camera: { flex: 1, width: "100%" },
   resultContainer: { alignItems: "center", marginTop: 20 },
   resultText: { fontSize: 18, fontWeight: "bold", margin: 10 },
-  input: {
-    width: 200,
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 20,
-    textAlign: "center",
-  },
 });
 
-// Bluetooth connection logic
+// Đoạn mã kết nối Bluetooth
 const requestBluetoothPermissions = async () => {
-  const { PermissionsAndroid, Platform } = require("react-native");
   if (Platform.OS === "android" && Platform.Version >= 31) {
     try {
       const granted = await PermissionsAndroid.requestMultiple([
@@ -167,14 +130,14 @@ const scanForDevices = async (deviceNameToConnect) => {
     const initialized = await initializeBluetooth();
     if (!initialized) return;
 
-    // Cancel discovery if already scanning
+    // Hủy quét nếu đang quét thiết bị
     await RNBluetoothClassic.cancelDiscovery();
 
-    // Start discovery for Bluetooth devices
+    // Bắt đầu quét thiết bị Bluetooth
     const discoveredDevices = await RNBluetoothClassic.startDiscovery();
     console.log("Devices:", discoveredDevices);
 
-    // Find the device with the name or address
+    // Tìm thiết bị Bluetooth theo tên hoặc địa chỉ
     const targetDevice = discoveredDevices.find(
       (device) =>
         device.name === deviceNameToConnect ||
@@ -200,7 +163,6 @@ const connectToDevice = async (device) => {
     const connected = await RNBluetoothClassic.connectToDevice(device.id);
     if (connected) {
       Alert.alert("Connected", `Connected to ${device.name}`);
-      setIsConnected(true); // Properly using setIsConnected
     } else {
       Alert.alert("Connection failed", `Failed to connect to ${device.name}`);
     }
