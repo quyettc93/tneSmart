@@ -1,10 +1,10 @@
 {
-  "button1": "a",
-  "button2": "b",
-  "button3": "c",
-  "button4": "d",
-  "button5": "e",
-  "button6": "f",
-  "button7": "g",
-  "button8": "h"
+  "button1": "01",
+  "button2": "02",
+  "button3": "04",
+  "button4": "08",
+  "button5": "10",
+  "button6": "20",
+  "button7": "40",
+  "button8": "80"
 }
