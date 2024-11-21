@@ -27,6 +27,7 @@ export default function App() {
   const [macAddress, setMacAddress] = useState(""); // MAC address of the Bluetooth device
   const [sentData, setSentData] = useState(""); // New state to store the sent data
   const [show, setShow] = useState([]); // New state to store the sent data
+  const [isHoldPressed, setIsHoldPressed] = useState(false);
 
   // //âm thanh
   // const sound = React.useRef(new Audio.Sound());
@@ -40,9 +41,9 @@ export default function App() {
   //     console.error("Error playing sound:", error);
   //   }
   // };
-
-  console.log(show);
-  console.log(sentData);
+  // console.log(isHoldPressed);
+  // console.log(show);
+  // console.log(sentData);
 
   // Bluetooth connection logic
   const requestBluetoothPermissions = async () => {
@@ -130,23 +131,27 @@ export default function App() {
       Alert.alert("Error", "Invalid QR Code data");
     }
   };
-
+  const handleToogle = () => {
+    setIsHoldPressed(!isHoldPressed);
+    isHoldPressed ? handleButtonPress(11) : handleButtonPress(12);
+  };
   const handleButtonPress = (buttonNumber) => {
     // playSound(); // Play sound when button is pressed
     if (isConnected) {
       const buttonKey = `button${buttonNumber}`; // Example: button1, button2, ...
       const dataToSend = buttonData[buttonKey]; // Retrieve the corresponding data from buttonData.json
-
+      console.log(`In ${dataToSend}`);
       RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
         .then(() => {
           setSentData(dataToSend); // Store the sent data in the state
-          console.log(typeof dataToSend);
-          console.log(dataToSend.slice(-1));
-          if (dataToSend.slice(-1) !== "4") {
-            setTimeout(() => {
-              setSentData(buttonData[`button12`]); // Store the sent data in the state
-            }, 300);
-          }
+
+          // console.log(typeof dataToSend);
+          // console.log(dataToSend.slice(-1));
+          // if (dataToSend.slice(-1) !== "4") {
+          //   setTimeout(() => {
+          //     setSentData(buttonData[`button12`]); // Store the sent data in the state
+          //   }, 300);
+          // }
         })
         .catch((error) => {
           console.error("Send Error:", error);
@@ -158,6 +163,25 @@ export default function App() {
         "Please connect to a Bluetooth device first."
       );
     }
+  };
+  //nhả nút
+  const handleButtonPressOut = () => {
+    var dataToSend = 0;
+    if (!isHoldPressed) {
+      dataToSend = buttonData[`button11`];
+    } else {
+      dataToSend = buttonData[`button12`];
+    }
+    console.log(`Out ${dataToSend}`);
+
+    RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
+      .then(() => {
+        setSentData(dataToSend);
+      })
+      .catch((error) => {
+        console.error("Send Error:", error);
+        Alert.alert("Error", "Failed to send data");
+      });
   };
 
   if (!cameraEnabled) {
@@ -210,7 +234,8 @@ export default function App() {
                           <TouchableOpacity
                             style={styles.buttonCall}
                             key={i}
-                            onPress={() => handleButtonPress(i + 1)}
+                            onPressIn={() => handleButtonPress(i + 1)}
+                            onPressOut={() => handleButtonPressOut(i + 1)}
                           >
                             <Text style={styles.buttonText}>{show[i]}</Text>
                           </TouchableOpacity>
@@ -224,18 +249,16 @@ export default function App() {
                           {
                             backgroundColor: "#af0f0f",
                             borderColor: "#720909",
+                            backgroundColor: isHoldPressed
+                              ? "#4caf50"
+                              : "#f44336",
                           },
                         ]}
                         key={"buttonhold"}
-                        onPress={() => handleButtonPress(11)}
+                        onPress={() => handleToogle()}
                       >
                         <Text style={styles.buttonTextFunction}>HOLD</Text>
                       </TouchableOpacity>
-                      {/* <Button
-                    key={"buttonclose"}
-                    title={"HOLD"}
-                    onPress={() => handleButtonPress(11)}
-                  /> */}
                     </View>
                     <View style={styles.containerRow}>
                       <View style={styles.buttonDoor}>
@@ -248,15 +271,11 @@ export default function App() {
                             },
                           ]}
                           key={"buttonclose"}
-                          onPress={() => handleButtonPress(9)}
+                          onPressIn={() => handleButtonPress(9)}
+                          onPressOut={() => handleButtonPressOut(9)}
                         >
                           <Text style={styles.buttonTextFunction}>CLOSE</Text>
                         </TouchableOpacity>
-                        {/* <Button
-                      key={"buttonclose"}
-                      title={"CLOSE"}
-                      onPress={() => handleButtonPress(9)}
-                    /> */}
                       </View>
                       <View style={styles.buttonDoor}>
                         <TouchableOpacity
@@ -269,14 +288,10 @@ export default function App() {
                           ]}
                           key={"buttonopen"}
                           onPress={() => handleButtonPress(10)}
+                          onPressOut={() => handleButtonPressOut(10)}
                         >
                           <Text style={styles.buttonTextFunction}>OPEN</Text>
                         </TouchableOpacity>
-                        {/* <Button
-                      key={"buttonOpen"}
-                      title={"OPEN"}
-                      onPress={() => handleButtonPress(10)}
-                    /> */}
                       </View>
                     </View>
                     {/* Display sent data */}
