@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Button, View, Text, Alert, TextInput, StyleSheet } from "react-native";
+import {
+  Button,
+  View,
+  Text,
+  Alert,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ImageBackground,
+  StatusBar,
+} from "react-native";
 import RNBluetoothClassic from "react-native-bluetooth-classic";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import buttonData from "./buttonData.json"; // Import the custom button data
@@ -14,6 +24,10 @@ export default function App() {
   const [buttonCount, setButtonCount] = useState(0);
   const [macAddress, setMacAddress] = useState(""); // MAC address of the Bluetooth device
   const [sentData, setSentData] = useState(""); // New state to store the sent data
+  const [show, setShow] = useState([]); // New state to store the sent data
+
+  console.log(show);
+  console.log(sentData);
 
   // Bluetooth connection logic
   const requestBluetoothPermissions = async () => {
@@ -94,6 +108,9 @@ export default function App() {
       setCameraEnabled(false); // Turn off camera after scan
       setMacAddress(parsedData.name); // Assuming QR data contains mac address
       connectToDevice(parsedData.name); // Connect directly using MAC address from QR code
+      setButtonCount(parsedData.count);
+      setShow(parsedData.show);
+      console.log(show);
     } catch (error) {
       Alert.alert("Error", "Invalid QR Code data");
     }
@@ -122,57 +139,121 @@ export default function App() {
 
   if (!cameraEnabled) {
     return (
-      <View style={styles.container}>
-        {idDeviceAddPass ? (
-          <View style={styles.resultContainer}>
-            <Text style={styles.resultText}>Name: {idDeviceAddPass.name}</Text>
+      <>
+        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+        <ImageBackground
+          source={require("./assets/Image/bacg.jpg")} // Đường dẫn tới hình nền của bạn
+          style={{
+            flex: 1, // Đảm bảo ảnh nền phủ toàn bộ không gian
+            justifyContent: "center", // Căn giữa các phần tử con trong toàn bộ ứng dụng
+            alignItems: "center", // Căn giữa các phần tử con trong toàn bộ ứng dụng
+          }}
+        >
+          <View style={styles.container}>
+            {idDeviceAddPass ? (
+              <View style={styles.resultContainer}>
+                {/* <Text style={styles.resultText}>Name: {idDeviceAddPass.name}</Text>
             <Text style={styles.resultText}>
               Password: {idDeviceAddPass.pass}
             </Text>
-            {isConnected ? (
-              <View>
-                <Text>ĐÃ KẾT NỐI THÀNH CÔNG</Text>
-                <TextInput
+            <Text style={styles.resultText}>
+              Count: {idDeviceAddPass.count}
+            </Text> */}
+                {/* <Text style={styles.resultText}>Show: {idDeviceAddPass.show}</Text> */}
+                {isConnected ? (
+                  <View style={styles.container}>
+                    {/* <Text style={styles.smarttne}>SmartTNE</Text> */}
+                    {/* <TextInput
                   style={styles.input}
                   placeholder="NHẬP SỐ TẦNG"
                   keyboardType="numeric"
                   onChangeText={(text) => setButtonCount(Number(text))}
                   value={buttonCount > 0 ? buttonCount.toString() : ""}
-                />
-                {Array.from({ length: buttonCount }, (_, i) => (
-                  <View style={styles.buttonCall}>
-                    <Button
-                      key={i}
-                      title={`Button ${i + 1}`}
-                      onPress={() => handleButtonPress(i + 1)}
-                    />
+                /> */}
+                    <View style={styles.buttonContainer}>
+                      {Array.from({ length: buttonCount }, (_, i) => (
+                        <View style={styles.buttonCallContainer} key={i}>
+                          <TouchableOpacity
+                            style={styles.buttonCall}
+                            key={i}
+                            onPress={() => handleButtonPress(i + 1)}
+                          >
+                            <Text style={styles.buttonText}>{show[i]}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                    <View style={{ marginTop: 30 }}>
+                      <TouchableOpacity
+                        style={styles.buttonFunction}
+                        key={"buttonhold"}
+                        onPress={() => handleButtonPress(11)}
+                      >
+                        <Text style={styles.buttonTextFunction}>HOLD</Text>
+                      </TouchableOpacity>
+                      {/* <Button
+                    key={"buttonclose"}
+                    title={"HOLD"}
+                    onPress={() => handleButtonPress(11)}
+                  /> */}
+                    </View>
+                    <View style={styles.containerRow}>
+                      <View style={styles.buttonDoor}>
+                        <TouchableOpacity
+                          style={styles.buttonFunction}
+                          key={"buttonclose"}
+                          onPress={() => handleButtonPress(9)}
+                        >
+                          <Text style={styles.buttonTextFunction}>CLOSE</Text>
+                        </TouchableOpacity>
+                        {/* <Button
+                      key={"buttonclose"}
+                      title={"CLOSE"}
+                      onPress={() => handleButtonPress(9)}
+                    /> */}
+                      </View>
+                      <View style={styles.buttonDoor}>
+                        <TouchableOpacity
+                          style={styles.buttonFunction}
+                          key={"buttonopen"}
+                          onPress={() => handleButtonPress(10)}
+                        >
+                          <Text style={styles.buttonTextFunction}>OPEN</Text>
+                        </TouchableOpacity>
+                        {/* <Button
+                      key={"buttonOpen"}
+                      title={"OPEN"}
+                      onPress={() => handleButtonPress(10)}
+                    /> */}
+                      </View>
+                    </View>
+                    {/* Display sent data */}
+                    {/* {sentData && (
+                    <View style={styles.sentDataContainer}>
+                      <Text style={styles.sentDataText}>
+                        Sent Data: {sentData}
+                      </Text>
+                    </View>
+                  )} */}
                   </View>
-                ))}
-                {/* Display sent data */}
-                {sentData && (
-                  <View style={styles.sentDataContainer}>
-                    <Text style={styles.sentDataText}>
-                      Sent Data: {sentData}
-                    </Text>
-                  </View>
+                ) : (
+                  <Text style={styles.smarttne}>ĐANG KẾT NỐI</Text>
                 )}
               </View>
             ) : (
-              <Text>ĐANG KẾT NỐI</Text>
+              <View>
+                <Text style={styles.message}>
+                  We need your permission to show the camera
+                </Text>
+                <Button
+                  onPress={handlePermissionRequest}
+                  title="Grant Camera Permission"
+                />
+              </View>
             )}
           </View>
-        ) : (
-          <View>
-            <Text style={styles.message}>
-              We need your permission to show the camera
-            </Text>
-            <Button
-              onPress={handlePermissionRequest}
-              title="Grant Camera Permission"
-            />
-          </View>
-        )}
-      </View>
+        </ImageBackground>
+      </>
     );
   }
 
@@ -192,6 +273,13 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  containerRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    // flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   message: { textAlign: "center", paddingBottom: 10 },
   camera: { flex: 1, width: "100%" },
   resultContainer: { alignItems: "center", marginTop: 20 },
@@ -207,11 +295,64 @@ const styles = StyleSheet.create({
   sentDataContainer: { marginTop: 20 },
   sentDataText: { fontSize: 16, fontWeight: "normal", color: "green" },
   buttonCall: {
-    width: 200,
-    height: 40,
-    borderColor: "gray",
+    width: 120, // Tăng kích thước để nút cân đối hơn
+    height: 70,
+    backgroundColor: "#007BFF", // Màu nền xanh lam đậm
+    borderColor: "#0056b3", // Màu viền xanh đậm hơn
     borderWidth: 1,
-    marginBottom: 10,
-    textAlign: "center",
+    borderRadius: 8, // Bo góc mềm mại
+    justifyContent: "center", // Căn giữa nội dung theo chiều dọc
+    alignItems: "center", // Căn giữa nội dung theo chiều ngang
+    marginBottom: 15, // Tăng khoảng cách để dễ nhìn hơn
+    shadowColor: "#000", // Hiệu ứng đổ bóng
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4, // Bóng cho Android
+  },
+  buttonFunction: {
+    width: 120, // Tăng kích thước để nút cân đối hơn
+    height: 70,
+    backgroundColor: "#11b119", // Màu nền xanh lam đậm
+    borderColor: "#056b1f", // Màu viền xanh đậm hơn
+    borderWidth: 1,
+    borderRadius: 8, // Bo góc mềm mại
+    justifyContent: "center", // Căn giữa nội dung theo chiều dọc
+    alignItems: "center", // Căn giữa nội dung theo chiều ngang
+    marginBottom: 15, // Tăng khoảng cách để dễ nhìn hơn
+    shadowColor: "#000", // Hiệu ứng đổ bóng
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4, // Bóng cho Android
+  },
+  buttonDoor: {
+    marginHorizontal: 10,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 38,
+    fontWeight: "bold",
+  },
+  buttonTextFunction: {
+    color: "#FFFFFF",
+    fontSize: 28,
+    fontWeight: "bold",
+  },
+  buttonContainer: {
+    width: "100%",
+    flexDirection: "row", // Sắp xếp từ trái sang phải
+    flexWrap: "wrap-reverse", // Dòng mới xuất hiện từ dưới lên trên
+    justifyContent: "flex-start", // Căn phần tử theo hướng ngang
+    alignItems: "flex-start", // Căn phần tử theo chiều dọc
+    margin: 10,
+  },
+  buttonCallContainer: {
+    width: "40%", // Mỗi hàng chứa
+    marginBottom: 10, // Khoảng cách giữa các nút
+    alignItems: "center", // Căn giữa các phần tử bên trong
+  },
+  smarttne: {
+    fontSize: 16,
   },
 });
