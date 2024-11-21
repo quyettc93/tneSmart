@@ -13,6 +13,8 @@ import {
 import RNBluetoothClassic from "react-native-bluetooth-classic";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import buttonData from "./buttonData.json"; // Import the custom button data
+import { LinearGradient } from "expo-linear-gradient";
+// import { Audio } from "expo-av";
 
 // QR scanner and Bluetooth handler
 export default function App() {
@@ -25,6 +27,19 @@ export default function App() {
   const [macAddress, setMacAddress] = useState(""); // MAC address of the Bluetooth device
   const [sentData, setSentData] = useState(""); // New state to store the sent data
   const [show, setShow] = useState([]); // New state to store the sent data
+
+  // //âm thanh
+  // const sound = React.useRef(new Audio.Sound());
+
+  // // Hàm phát âm thanh
+  // const playSound = async () => {
+  //   try {
+  //     await sound.current.loadAsync(require("./assets/Audio/button.mp3")); // Đảm bảo đường dẫn đúng tới file âm thanh
+  //     await sound.current.playAsync(); // Phát âm thanh
+  //   } catch (error) {
+  //     console.error("Error playing sound:", error);
+  //   }
+  // };
 
   console.log(show);
   console.log(sentData);
@@ -117,13 +132,21 @@ export default function App() {
   };
 
   const handleButtonPress = (buttonNumber) => {
+    // playSound(); // Play sound when button is pressed
     if (isConnected) {
       const buttonKey = `button${buttonNumber}`; // Example: button1, button2, ...
-      const dataToSend = buttonData[buttonKey] + "\n"; // Retrieve the corresponding data from buttonData.json
+      const dataToSend = buttonData[buttonKey]; // Retrieve the corresponding data from buttonData.json
 
       RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
         .then(() => {
           setSentData(dataToSend); // Store the sent data in the state
+          console.log(typeof dataToSend);
+          console.log(dataToSend.slice(-1));
+          if (dataToSend.slice(-1) !== "4") {
+            setTimeout(() => {
+              setSentData(buttonData[`button12`]); // Store the sent data in the state
+            }, 300);
+          }
         })
         .catch((error) => {
           console.error("Send Error:", error);
@@ -149,6 +172,17 @@ export default function App() {
             alignItems: "center", // Căn giữa các phần tử con trong toàn bộ ứng dụng
           }}
         >
+          <LinearGradient
+            colors={["#ffffff", "#2c2d5e"]} // Từ trắng sang đen
+            style={{
+              position: "absolute", // Để lớp phủ nằm trên ảnh nền
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              opacity: 0.8,
+            }}
+          />
           <View style={styles.container}>
             {idDeviceAddPass ? (
               <View style={styles.resultContainer}>
@@ -185,7 +219,13 @@ export default function App() {
                     </View>
                     <View style={{ marginTop: 30 }}>
                       <TouchableOpacity
-                        style={styles.buttonFunction}
+                        style={[
+                          styles.buttonFunction,
+                          {
+                            backgroundColor: "#af0f0f",
+                            borderColor: "#720909",
+                          },
+                        ]}
                         key={"buttonhold"}
                         onPress={() => handleButtonPress(11)}
                       >
@@ -200,7 +240,13 @@ export default function App() {
                     <View style={styles.containerRow}>
                       <View style={styles.buttonDoor}>
                         <TouchableOpacity
-                          style={styles.buttonFunction}
+                          style={[
+                            styles.buttonFunction,
+                            {
+                              backgroundColor: "#bebc10",
+                              borderColor: "#838107",
+                            },
+                          ]}
                           key={"buttonclose"}
                           onPress={() => handleButtonPress(9)}
                         >
@@ -214,7 +260,13 @@ export default function App() {
                       </View>
                       <View style={styles.buttonDoor}>
                         <TouchableOpacity
-                          style={styles.buttonFunction}
+                          style={[
+                            styles.buttonFunction,
+                            {
+                              backgroundColor: "#06ce27",
+                              borderColor: "#06640e",
+                            },
+                          ]}
                           key={"buttonopen"}
                           onPress={() => handleButtonPress(10)}
                         >
@@ -272,7 +324,11 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   containerRow: {
     marginTop: 10,
     flexDirection: "row",
@@ -300,7 +356,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#007BFF", // Màu nền xanh lam đậm
     borderColor: "#0056b3", // Màu viền xanh đậm hơn
     borderWidth: 1,
-    borderRadius: 8, // Bo góc mềm mại
+    borderRadius: 16, // Bo góc mềm mại
     justifyContent: "center", // Căn giữa nội dung theo chiều dọc
     alignItems: "center", // Căn giữa nội dung theo chiều ngang
     marginBottom: 15, // Tăng khoảng cách để dễ nhìn hơn
@@ -313,10 +369,9 @@ const styles = StyleSheet.create({
   buttonFunction: {
     width: 120, // Tăng kích thước để nút cân đối hơn
     height: 70,
-    backgroundColor: "#11b119", // Màu nền xanh lam đậm
-    borderColor: "#056b1f", // Màu viền xanh đậm hơn
+
     borderWidth: 1,
-    borderRadius: 8, // Bo góc mềm mại
+    borderRadius: 16, // Bo góc mềm mại
     justifyContent: "center", // Căn giữa nội dung theo chiều dọc
     alignItems: "center", // Căn giữa nội dung theo chiều ngang
     marginBottom: 15, // Tăng khoảng cách để dễ nhìn hơn
