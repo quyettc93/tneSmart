@@ -14,7 +14,7 @@ import RNBluetoothClassic from "react-native-bluetooth-classic";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import buttonData from "./buttonData.json"; // Import the custom button data
 import { LinearGradient } from "expo-linear-gradient";
-// import { Audio } from "expo-av";
+import { Audio } from "expo-av";
 
 // QR scanner and Bluetooth handler
 export default function App() {
@@ -30,18 +30,21 @@ export default function App() {
   const [isHoldPressed, setIsHoldPressed] = useState(false);
 
   // //âm thanh
-  // const sound = React.useRef(new Audio.Sound());
+  let soundObject = null;
 
-  // // Hàm phát âm thanh
-  // const playSound = async () => {
-  //   try {
-  //     await sound.current.loadAsync(require("./assets/Audio/button.mp3")); // Đảm bảo đường dẫn đúng tới file âm thanh
-  //     await sound.current.playAsync(); // Phát âm thanh
-  //   } catch (error) {
-  //     console.error("Error playing sound:", error);
-  //   }
-  // };
-  // console.log(isHoldPressed);
+  // Hàm phát âm thanh
+  const playSound = async () => {
+    try {
+      if (soundObject === null) {
+        soundObject = new Audio.Sound();
+        await soundObject.loadAsync(require("./assets/Audio/button.mp3"));
+      }
+      await soundObject.replayAsync();
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
+  };
+  console.log(isHoldPressed);
   // console.log(show);
   // console.log(sentData);
 
@@ -133,17 +136,23 @@ export default function App() {
   };
   const handleToogle = () => {
     setIsHoldPressed(!isHoldPressed);
-    isHoldPressed ? handleButtonPress(11) : handleButtonPress(12);
+    isHoldPressed ? handleButtonPress(12) : handleButtonPress(11);
   };
   const handleButtonPress = (buttonNumber) => {
-    // playSound(); // Play sound when button is pressed
+    playSound(); // Play sound when button is pressed
     if (isConnected) {
       const buttonKey = `button${buttonNumber}`; // Example: button1, button2, ...
-      const dataToSend = buttonData[buttonKey]; // Retrieve the corresponding data from buttonData.json
-      console.log(`In ${dataToSend}`);
-      RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
+      const dataToSend = buttonData[buttonKey];
+      var dataToSentNew = 0;
+      if (isHoldPressed) {
+        dataToSentNew = dataToSend.slice(0, 6) + "04";
+      } else {
+        dataToSentNew = dataToSend;
+      }
+      console.log(`In ${dataToSentNew}`);
+      RNBluetoothClassic.writeToDevice(macAddress, dataToSentNew)
         .then(() => {
-          setSentData(dataToSend); // Store the sent data in the state
+          setSentData(dataToSentNew); // Store the sent data in the state
 
           // console.log(typeof dataToSend);
           // console.log(dataToSend.slice(-1));
@@ -167,7 +176,7 @@ export default function App() {
   //nhả nút
   const handleButtonPressOut = () => {
     var dataToSend = 0;
-    if (!isHoldPressed) {
+    if (isHoldPressed) {
       dataToSend = buttonData[`button11`];
     } else {
       dataToSend = buttonData[`button12`];
@@ -247,11 +256,14 @@ export default function App() {
                         style={[
                           styles.buttonFunction,
                           {
-                            backgroundColor: "#af0f0f",
-                            borderColor: "#720909",
                             backgroundColor: isHoldPressed
-                              ? "#4caf50"
-                              : "#f44336",
+                              ? "#7b4415" // Màu đỏ khi nhấn
+                              : "#fb970c", // Màu xanh khi thả
+                            borderColor: isHoldPressed ? "#242322" : "#4a4848", // Viền đỏ khi nhấn, viền xanh khi thả
+                            // transform: isHoldPressed
+                            //   ? [{ scale: 0.95 }] // Kích thước không thay đổi khi nhấn
+                            //   : [{ scale: 1 }], // Kích thước giảm đi khi thả
+                            opacity: isHoldPressed ? 0.5 : 1,
                           },
                         ]}
                         key={"buttonhold"}
@@ -266,23 +278,7 @@ export default function App() {
                           style={[
                             styles.buttonFunction,
                             {
-                              backgroundColor: "#bebc10",
-                              borderColor: "#838107",
-                            },
-                          ]}
-                          key={"buttonclose"}
-                          onPressIn={() => handleButtonPress(9)}
-                          onPressOut={() => handleButtonPressOut(9)}
-                        >
-                          <Text style={styles.buttonTextFunction}>CLOSE</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.buttonDoor}>
-                        <TouchableOpacity
-                          style={[
-                            styles.buttonFunction,
-                            {
-                              backgroundColor: "#06ce27",
+                              backgroundColor: "#149d2b",
                               borderColor: "#06640e",
                             },
                           ]}
@@ -293,7 +289,24 @@ export default function App() {
                           <Text style={styles.buttonTextFunction}>OPEN</Text>
                         </TouchableOpacity>
                       </View>
+                      <View style={styles.buttonDoor}>
+                        <TouchableOpacity
+                          style={[
+                            styles.buttonFunction,
+                            {
+                              backgroundColor: "#c92107",
+                              borderColor: "#830707",
+                            },
+                          ]}
+                          key={"buttonclose"}
+                          onPressIn={() => handleButtonPress(9)}
+                          onPressOut={() => handleButtonPressOut(9)}
+                        >
+                          <Text style={styles.buttonTextFunction}>CLOSE</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
+
                     {/* Display sent data */}
                     {/* {sentData && (
                     <View style={styles.sentDataContainer}>
@@ -318,6 +331,9 @@ export default function App() {
                 />
               </View>
             )}
+            <View>
+              <Text style={styles.logoText}>@tne.vn</Text>
+            </View>
           </View>
         </ImageBackground>
       </>
@@ -424,5 +440,12 @@ const styles = StyleSheet.create({
   },
   smarttne: {
     fontSize: 16,
+  },
+  logoText: {
+    marginBottom: 30,
+    fontSize: 16,
+    color: "#FFFFFF",
+    fontStyle: "italic",
+    opacity: 0.8,
   },
 });
