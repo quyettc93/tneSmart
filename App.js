@@ -44,7 +44,7 @@ export default function App() {
       console.error("Error playing sound:", error);
     }
   };
-  console.log(isHoldPressed);
+  // console.log(isHoldPressed);
   // console.log(show);
   // console.log(sentData);
 
@@ -135,8 +135,27 @@ export default function App() {
     }
   };
   const handleToogle = () => {
-    setIsHoldPressed(!isHoldPressed);
-    isHoldPressed ? handleButtonPress(12) : handleButtonPress(11);
+    setIsHoldPressed((e) => !e);
+    handleButtonPressHold();
+  };
+  const handleButtonPressHold = () => {
+    playSound(); // Play sound when button is pressed
+    var Number = 0;
+    if (isHoldPressed) {
+      Number = 12;
+    } else {
+      Number = 11;
+    }
+    const dataToSend = buttonData[`button${Number}`];
+    console.log(`Hold ${dataToSend}`);
+    RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
+      .then(() => {
+        setSentData(dataToSend);
+      })
+      .catch((error) => {
+        console.error("Send Error:", error);
+        Alert.alert("Error", "Failed to send data");
+      });
   };
   const handleButtonPress = (buttonNumber) => {
     playSound(); // Play sound when button is pressed
@@ -446,6 +465,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FFFFFF",
     fontStyle: "italic",
-    opacity: 0.8,
+    opacity: 0.5,
   },
 });
