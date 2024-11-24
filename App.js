@@ -15,6 +15,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import buttonData from "./buttonData.json"; // Import the custom button data
 import { LinearGradient } from "expo-linear-gradient";
 import { Audio } from "expo-av";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // QR scanner and Bluetooth handler
 export default function App() {
@@ -28,6 +29,47 @@ export default function App() {
   const [sentData, setSentData] = useState(""); // New state to store the sent data
   const [show, setShow] = useState([]); // New state to store the sent data
   const [isHoldPressed, setIsHoldPressed] = useState(false);
+
+  console.log(isConnected);
+
+  //ket noi voi thiet bij truoc do da ket noi
+  const saveLastDevice = async (data) => {
+    try {
+      await AsyncStorage.setItem("LAST_DEVICE", data);
+      console.log("Last connected device saved:", data);
+    } catch (error) {
+      console.error("Error saving last connected device:", error);
+    }
+  };
+
+  const getLastDevice = async () => {
+    try {
+      console.log("Fetching last connected device");
+      const lastDevice = await AsyncStorage.getItem("LAST_DEVICE");
+      return lastDevice;
+    } catch (error) {
+      console.error("Error fetching last connected device:", error);
+      return null;
+    }
+  };
+
+  //nut ket noi lai
+  const handleReconnect = async () => {
+    console.log("Reconnecting to last device");
+    const lastDevice = await getLastDevice();
+    console.log(`vao chua ${lastDevice}`);
+    const parsedData = JSON.parse(lastDevice);
+    if (parsedData) {
+      connectToDevice(parsedData.name);
+      setCameraEnabled(false); // Turn off camera after scan
+      setMacAddress(parsedData.name); // Assuming QR data contains mac address
+      setButtonCount(parsedData.count);
+      setShow(parsedData.show);
+      setIdDeviceAddPass(parsedData); // Save QR data
+    } else {
+      Alert.alert("No device", "No previously connected device found.");
+    }
+  };
 
   // //âm thanh
   let soundObject = null;
@@ -88,16 +130,37 @@ export default function App() {
   };
 
   // Removed the scanForDevices function
-  const connectToDevice = async (macAddress) => {
+  // const connectToDevice = async (macAddress) => {
+  //   try {
+  //     // console.log(macAddress);
+  //     const connected = await RNBluetoothClassic.connectToDevice(macAddress);
+  //     if (connected) {
+  //       // Alert.alert(
+  //       //   "Connected",
+  //       //   `Connected to device with MAC address: ${macAddress}`
+  //       // );
+  //       setIsConnected(true); // Properly using setIsConnected
+  //     } else {
+  //       Alert.alert(
+  //         "Connection failed",
+  //         `Failed to connect to device with MAC address: ${macAddress}`
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error("Connection Error:", error);
+  //     Alert.alert("Error", "An error occurred while connecting to the device");
+  //   }
+  // };
+
+  const connectToDevice = async (macAddress, parsedData) => {
     try {
-      console.log(macAddress);
+      console.log(`$da ton tai{parsedData}`);
       const connected = await RNBluetoothClassic.connectToDevice(macAddress);
       if (connected) {
-        // Alert.alert(
-        //   "Connected",
-        //   `Connected to device with MAC address: ${macAddress}`
-        // );
-        setIsConnected(true); // Properly using setIsConnected
+        setIsConnected(true);
+        if (parsedData) {
+          await saveLastDevice(parsedData); // Lưu thông tin thiết bị đã kết nối
+        }
       } else {
         Alert.alert(
           "Connection failed",
@@ -106,7 +169,7 @@ export default function App() {
       }
     } catch (error) {
       console.error("Connection Error:", error);
-      Alert.alert("Error", "An error occurred while connecting to the device");
+      Alert.alert("Error", "Turn on bluetooth and pair then try again");
     }
   };
 
@@ -121,15 +184,15 @@ export default function App() {
   const handleBarcodeScanned = ({ type, data }) => {
     setScanned(true);
     try {
-      console.log(data);
+      // console.log(data);
       const parsedData = JSON.parse(data);
       setIdDeviceAddPass(parsedData); // Save QR data
       setCameraEnabled(false); // Turn off camera after scan
       setMacAddress(parsedData.name); // Assuming QR data contains mac address
-      connectToDevice(parsedData.name); // Connect directly using MAC address from QR code
+      connectToDevice(parsedData.name, data); // Connect directly using MAC address from QR code
       setButtonCount(parsedData.count);
       setShow(parsedData.show);
-      console.log(show);
+      // console.log(show);
     } catch (error) {
       Alert.alert("Error", "Invalid QR Code data");
     }
@@ -302,7 +365,7 @@ export default function App() {
                             },
                           ]}
                           key={"buttonopen"}
-                          onPress={() => handleButtonPress(10)}
+                          onPressIn={() => handleButtonPress(10)}
                           onPressOut={() => handleButtonPressOut(10)}
                         >
                           <Text style={styles.buttonTextFunction}>OPEN</Text>
@@ -340,14 +403,29 @@ export default function App() {
                 )}
               </View>
             ) : (
-              <View>
-                <Text style={styles.message}>
-                  We need your permission to show the camera
-                </Text>
-                <Button
+              <View style={styles.container}>
+                <View style={styles.messageView}>
+                  <Text style={styles.message}>
+                    Cấp quyền camera để sử dụng ứng dụng
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.reconnectButton}
                   onPress={handlePermissionRequest}
-                  title="Grant Camera Permission"
-                />
+                >
+                  <Text style={styles.reconnectButtonText}>
+                    QUÉT QR ĐỂ KẾT NỐI
+                  </Text>
+                </TouchableOpacity>
+
+                <View>
+                  <TouchableOpacity
+                    style={styles.reconnectButton}
+                    onPress={handleReconnect}
+                  >
+                    <Text style={styles.reconnectButtonText}>KẾT NỐI LẠI</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
             <View>
@@ -386,7 +464,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  message: { textAlign: "center", paddingBottom: 10 },
+  message: {
+    width: 280, // Chiều rộng của thẻ
+    textAlign: "center", // Căn giữa chữ theo chiều ngang
+  },
+
+  messageView: {
+    alignItems: "center",
+    justifyContent: "center",
+    // padding: 8,
+    // borderRadius: 4,
+    // backgroundColor: "#f0f0ea",
+    // marginBottom: 8,
+  },
   camera: { flex: 1, width: "100%" },
   resultContainer: { alignItems: "center", marginTop: 20 },
   resultText: { fontSize: 18, fontWeight: "bold", margin: 10 },
@@ -466,5 +556,18 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontStyle: "italic",
     opacity: 0.5,
+  },
+  reconnectButton: {
+    width: 300,
+    backgroundColor: "#3498db",
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 10,
+    alignItems: "center",
+  },
+  reconnectButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
