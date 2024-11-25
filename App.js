@@ -30,7 +30,8 @@ export default function App() {
   const [show, setShow] = useState([]); // New state to store the sent data
   const [isHoldPressed, setIsHoldPressed] = useState(false);
 
-  console.log(isConnected);
+  // console.log(isConnected);
+  console.log(isHoldPressed);
 
   //ket noi voi thiet bij truoc do da ket noi
   const saveLastDevice = async (data) => {
@@ -225,11 +226,23 @@ export default function App() {
     if (isConnected) {
       const buttonKey = `button${buttonNumber}`; // Example: button1, button2, ...
       const dataToSend = buttonData[buttonKey];
-      var dataToSentNew = 0;
+      console.log(`da nhan ${buttonKey}`);
+      let dataToSentNew = 0;
+      console.log(`kiem tra${isHoldPressed}`);
       if (isHoldPressed) {
-        dataToSentNew = dataToSend.slice(0, 6) + "04";
+        console.log("vao day");
+        // dataToSentNew = dataToSend.slice(0, 6) + "04";
+        // Lấy giá trị cuối mảng, thực hiện phép toán và thay đổi giá trị
+        let lastValue = parseInt(dataToSend[dataToSend.length - 1], 16); // Lấy giá trị cuối, chuyển từ hex sang số
+        let newValue = lastValue - lastValue + 0x04; // Thực hiện trừ giá trị cũ và cộng thêm 0x04
+        // Thay đổi giá trị cuối mảng
+        dataToSend[dataToSend.length - 1] =
+          "0x" + newValue.toString(16).padStart(2, "0").toUpperCase();
+        dataToSentNew = dataToSend;
+        console.log(dataToSentNew);
       } else {
         dataToSentNew = dataToSend;
+        console.log(`da nhan 11111111111111 ${dataToSentNew}`);
       }
       console.log(`In ${dataToSentNew}`);
       RNBluetoothClassic.writeToDevice(macAddress, dataToSentNew)
