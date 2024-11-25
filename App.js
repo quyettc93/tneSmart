@@ -12,10 +12,11 @@ import {
 } from "react-native";
 import RNBluetoothClassic from "react-native-bluetooth-classic";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import buttonData from "./buttonData.json"; // Import the custom button data
+// import buttonData from "./buttonData.json"; // Import the custom button data
 import { LinearGradient } from "expo-linear-gradient";
 import { Audio } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import dataSent from "./sentdata";
 
 // QR scanner and Bluetooth handler
 export default function App() {
@@ -204,13 +205,13 @@ export default function App() {
   };
   const handleButtonPressHold = () => {
     playSound(); // Play sound when button is pressed
-    var Number = 0;
+    let Number = 0;
     if (isHoldPressed) {
       Number = 12;
     } else {
       Number = 11;
     }
-    const dataToSend = buttonData[`button${Number}`];
+    const dataToSend = dataSent[Number];
     console.log(`Hold ${dataToSend}`);
     RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
       .then(() => {
@@ -224,43 +225,39 @@ export default function App() {
   const handleButtonPress = (buttonNumber) => {
     playSound(); // Play sound when button is pressed
     if (isConnected) {
-      const buttonKey = `button${buttonNumber}`; // Example: button1, button2, ...
-      const dataToSend = buttonData[buttonKey];
-      console.log(`da nhan ${buttonKey}`);
-      let dataToSentNew = 0;
-      console.log(`kiem tra${isHoldPressed}`);
+      const dataToSend = dataSent[buttonNumber];
+      let dataToSentNew = [...dataToSend];
       if (isHoldPressed) {
-        console.log("vao day");
-        // dataToSentNew = dataToSend.slice(0, 6) + "04";
-        // Lấy giá trị cuối mảng, thực hiện phép toán và thay đổi giá trị
-        let lastValue = parseInt(dataToSend[dataToSend.length - 1], 16); // Lấy giá trị cuối, chuyển từ hex sang số
-        let newValue = lastValue - lastValue + 0x04; // Thực hiện trừ giá trị cũ và cộng thêm 0x04
-        // Thay đổi giá trị cuối mảng
-        dataToSend[dataToSend.length - 1] =
-          "0x" + newValue.toString(16).padStart(2, "0").toUpperCase();
-        dataToSentNew = dataToSend;
-        console.log(dataToSentNew);
-      } else {
-        dataToSentNew = dataToSend;
-        console.log(`da nhan 11111111111111 ${dataToSentNew}`);
+        dataToSentNew.splice(-1, 1, "0x04");
       }
-      console.log(`In ${dataToSentNew}`);
       RNBluetoothClassic.writeToDevice(macAddress, dataToSentNew)
         .then(() => {
+          console.log(`Sent data: ${dataToSentNew}`);
           setSentData(dataToSentNew); // Store the sent data in the state
-
-          // console.log(typeof dataToSend);
-          // console.log(dataToSend.slice(-1));
-          // if (dataToSend.slice(-1) !== "4") {
-          //   setTimeout(() => {
-          //     setSentData(buttonData[`button12`]); // Store the sent data in the state
-          //   }, 300);
-          // }
         })
         .catch((error) => {
           console.error("Send Error:", error);
           Alert.alert("Error", "Failed to send data");
         });
+      /////// xoá
+      setTimeout(() => {
+        let Number = 0;
+        if (isHoldPressed) {
+          Number = 11;
+        } else {
+          Number = 12;
+        }
+        const dataToSend = dataSent[Number];
+        console.log(`Hold and Floor ${dataToSend}`);
+        RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
+          .then(() => {
+            setSentData(dataToSend);
+          })
+          .catch((error) => {
+            console.error("Send Error:", error);
+            Alert.alert("Error", "Failed to send data");
+          });
+      }, 1000);
     } else {
       Alert.alert(
         "Bluetooth not connected",
@@ -272,11 +269,10 @@ export default function App() {
   const handleButtonPressOut = () => {
     var dataToSend = 0;
     if (isHoldPressed) {
-      dataToSend = buttonData[`button11`];
+      dataToSend = dataSent[11];
     } else {
-      dataToSend = buttonData[`button12`];
+      dataToSend = dataSent[12];
     }
-    console.log(`Out ${dataToSend}`);
 
     RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
       .then(() => {
@@ -314,32 +310,15 @@ export default function App() {
           <View style={styles.container}>
             {idDeviceAddPass ? (
               <View style={styles.resultContainer}>
-                {/* <Text style={styles.resultText}>Name: {idDeviceAddPass.name}</Text>
-            <Text style={styles.resultText}>
-              Password: {idDeviceAddPass.pass}
-            </Text>
-            <Text style={styles.resultText}>
-              Count: {idDeviceAddPass.count}
-            </Text> */}
-                {/* <Text style={styles.resultText}>Show: {idDeviceAddPass.show}</Text> */}
                 {isConnected ? (
                   <View style={styles.container}>
-                    {/* <Text style={styles.smarttne}>SmartTNE</Text> */}
-                    {/* <TextInput
-                  style={styles.input}
-                  placeholder="NHẬP SỐ TẦNG"
-                  keyboardType="numeric"
-                  onChangeText={(text) => setButtonCount(Number(text))}
-                  value={buttonCount > 0 ? buttonCount.toString() : ""}
-                /> */}
                     <View style={styles.buttonContainer}>
                       {Array.from({ length: buttonCount }, (_, i) => (
                         <View style={styles.buttonCallContainer} key={i}>
                           <TouchableOpacity
                             style={styles.buttonCall}
                             key={i}
-                            onPressIn={() => handleButtonPress(i + 1)}
-                            onPressOut={() => handleButtonPressOut(i + 1)}
+                            onPress={() => handleButtonPress(i + 1)}
                           >
                             <Text style={styles.buttonText}>{show[i]}</Text>
                           </TouchableOpacity>
@@ -355,9 +334,6 @@ export default function App() {
                               ? "#7b4415" // Màu đỏ khi nhấn
                               : "#fb970c", // Màu xanh khi thả
                             borderColor: isHoldPressed ? "#242322" : "#4a4848", // Viền đỏ khi nhấn, viền xanh khi thả
-                            // transform: isHoldPressed
-                            //   ? [{ scale: 0.95 }] // Kích thước không thay đổi khi nhấn
-                            //   : [{ scale: 1 }], // Kích thước giảm đi khi thả
                             opacity: isHoldPressed ? 0.5 : 1,
                           },
                         ]}
@@ -378,8 +354,7 @@ export default function App() {
                             },
                           ]}
                           key={"buttonopen"}
-                          onPressIn={() => handleButtonPress(10)}
-                          onPressOut={() => handleButtonPressOut(10)}
+                          onPress={() => handleButtonPress(10)}
                         >
                           <Text style={styles.buttonTextFunction}>OPEN</Text>
                         </TouchableOpacity>
@@ -394,22 +369,12 @@ export default function App() {
                             },
                           ]}
                           key={"buttonclose"}
-                          onPressIn={() => handleButtonPress(9)}
-                          onPressOut={() => handleButtonPressOut(9)}
+                          onPress={() => handleButtonPress(9)}
                         >
                           <Text style={styles.buttonTextFunction}>CLOSE</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
-
-                    {/* Display sent data */}
-                    {/* {sentData && (
-                    <View style={styles.sentDataContainer}>
-                      <Text style={styles.sentDataText}>
-                        Sent Data: {sentData}
-                      </Text>
-                    </View>
-                  )} */}
                   </View>
                 ) : (
                   <Text style={styles.smarttne}>ĐANG KẾT NỐI</Text>
