@@ -30,9 +30,74 @@ export default function App() {
   const [sentData, setSentData] = useState(""); // New state to store the sent data
   const [show, setShow] = useState([]); // New state to store the sent data
   const [isHoldPressed, setIsHoldPressed] = useState(false);
+  const [callBinary, setCallBinary] = useState([0, 0, 0, 0, 0, 0, 0, 0]);
+  const [funcBinary, setFuncBinary] = useState([0, 0, 0, 0, 0, 0, 0, 0]);
+  const [arrSentData, setArrSentData] = useState([
+    "0x00",
+    "0x00",
+    "0x00",
+    "0x00",
+  ]);
 
   // console.log(isConnected);
-  console.log(isHoldPressed);
+  // console.log(isHoldPressed);
+  // console.log(callBinary);
+  // console.log(funcBinary);
+  console.log(arrSentData);
+
+  useEffect(() => {
+    if (isConnected) {
+      // Chuyển mảng nhị phân thành chuỗi nhị phân
+      const binaryString = callBinary.join("");
+      // Chuyển chuỗi nhị phân thành số thập phân rồi chuyển thành thập lục phân
+      let hexValue = parseInt(binaryString, 2).toString(16).toUpperCase();
+      hexValue = hexValue.padStart(2, "0"); // Đảm bảo đủ 2 ký tự
+      const formattedHexValue = `0x${hexValue}`;
+      console.log(`SentCall: ${formattedHexValue}`);
+
+      // Cập nhật arrSentData
+      setArrSentData((prevState) => {
+        const newState = [...prevState];
+        newState[0] = formattedHexValue;
+        newState[1] = "0x00";
+        newState[2] = "0x00";
+        return newState;
+      });
+
+      // Gửi dữ liệu Bluetooth
+      senDataToBluetooth();
+    }
+  }, [callBinary]); // Trigger effect when callBinary or isConnected changes
+
+  useEffect(() => {
+    if (isConnected) {
+      // Chuyển mảng nhị phân thành chuỗi nhị phân
+      const binaryString = funcBinary.join("");
+      // Chuyển chuỗi nhị phân thành số thập phân rồi chuyển thành thập lục phân
+      let hexValue = parseInt(binaryString, 2).toString(16).toUpperCase();
+      hexValue = hexValue.padStart(2, "0"); // Đảm bảo đủ 2 ký tự
+      const formattedHexValue = `0x${hexValue}`;
+      console.log(`SentFunction: ${formattedHexValue}`);
+
+      // Gửi dữ liệu Bluetooth
+      setArrSentData((prevState) => {
+        const newState = [...prevState];
+        newState[1] = "0x00";
+        newState[2] = "0x00";
+        newState[3] = formattedHexValue;
+        return newState;
+      });
+      senDataToBluetooth();
+    }
+  }, [funcBinary]);
+
+  useEffect(() => {
+    if (isConnected) {
+      let newState = [...funcBinary];
+      newState[5] = isHoldPressed ? 1 : 0;
+      setFuncBinary(newState);
+    }
+  }, [isHoldPressed]);
 
   //ket noi voi thiet bij truoc do da ket noi
   const saveLastDevice = async (data) => {
@@ -200,22 +265,14 @@ export default function App() {
     }
   };
   const handleToogle = () => {
+    playSound();
     setIsHoldPressed((e) => !e);
-    handleButtonPressHold();
   };
-  const handleButtonPressHold = () => {
-    playSound(); // Play sound when button is pressed
-    let Number = 0;
-    if (isHoldPressed) {
-      Number = 12;
-    } else {
-      Number = 11;
-    }
-    const dataToSend = dataSent[Number];
-    console.log(`Hold ${dataToSend}`);
-    RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
+
+  const senDataToBluetooth = () => {
+    RNBluetoothClassic.writeToDevice(macAddress, arrSentData)
       .then(() => {
-        setSentData(dataToSend);
+        setSentData(arrSentData);
       })
       .catch((error) => {
         console.error("Send Error:", error);
@@ -225,39 +282,20 @@ export default function App() {
   const handleButtonPress = (buttonNumber) => {
     playSound(); // Play sound when button is pressed
     if (isConnected) {
-      const dataToSend = dataSent[buttonNumber];
-      let dataToSentNew = [...dataToSend];
-      if (isHoldPressed) {
-        dataToSentNew.splice(-1, 1, "0x04");
-      }
-      RNBluetoothClassic.writeToDevice(macAddress, dataToSentNew)
-        .then(() => {
-          console.log(`Sent data: ${dataToSentNew}`);
-          setSentData(dataToSentNew); // Store the sent data in the state
-        })
-        .catch((error) => {
-          console.error("Send Error:", error);
-          Alert.alert("Error", "Failed to send data");
-        });
-      /////// xoá
-      setTimeout(() => {
-        let Number = 0;
-        if (isHoldPressed) {
-          Number = 11;
-        } else {
-          Number = 12;
-        }
-        const dataToSend = dataSent[Number];
-        console.log(`Hold and Floor ${dataToSend}`);
-        RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
-          .then(() => {
-            setSentData(dataToSend);
-          })
-          .catch((error) => {
-            console.error("Send Error:", error);
-            Alert.alert("Error", "Failed to send data");
-          });
-      }, 1000);
+      const numberFloor = 7; //0 đến 7 là thành 8 tầng
+      setCallBinary((prev) => {
+        const newCallBinary = [...prev];
+        newCallBinary[numberFloor - buttonNumber] = 1;
+        return newCallBinary;
+      });
+
+      // setTimeout(() => {
+      //   setCallBinary((prevState) => {
+      //     const newState = [...prevState];
+      //     newState[numberFloor - buttonNumber] = 0; // Đặt lại giá trị về 0 sau 1 giây
+      //     return newState;
+      //   });
+      // }, 500);
     } else {
       Alert.alert(
         "Bluetooth not connected",
@@ -265,25 +303,30 @@ export default function App() {
       );
     }
   };
-  //nhả nút
-  const handleButtonPressOut = () => {
-    var dataToSend = 0;
-    if (isHoldPressed) {
-      dataToSend = dataSent[11];
-    } else {
-      dataToSend = dataSent[12];
-    }
-
-    RNBluetoothClassic.writeToDevice(macAddress, dataToSend)
-      .then(() => {
-        setSentData(dataToSend);
-      })
-      .catch((error) => {
-        console.error("Send Error:", error);
-        Alert.alert("Error", "Failed to send data");
+  //function button open and close
+  const handleButtonFunctionPress = (buttonFunction) => {
+    playSound(); // Play sound when button is pressed
+    if (isConnected) {
+      setFuncBinary((prev) => {
+        const newCallBinary = [...prev];
+        newCallBinary[buttonFunction] = 1;
+        return newCallBinary;
       });
-  };
 
+      setTimeout(() => {
+        setFuncBinary((prevState) => {
+          const newState = [...prevState];
+          newState[buttonFunction] = 0; // Đặt lại giá trị về 0 sau 1 giây
+          return newState;
+        });
+      }, 500);
+    } else {
+      Alert.alert(
+        "Bluetooth not connected",
+        "Please connect to a Bluetooth device first."
+      );
+    }
+  };
   if (!cameraEnabled) {
     return (
       <>
@@ -318,7 +361,7 @@ export default function App() {
                           <TouchableOpacity
                             style={styles.buttonCall}
                             key={i}
-                            onPress={() => handleButtonPress(i + 1)}
+                            onPress={() => handleButtonPress(i)}
                           >
                             <Text style={styles.buttonText}>{show[i]}</Text>
                           </TouchableOpacity>
@@ -354,7 +397,7 @@ export default function App() {
                             },
                           ]}
                           key={"buttonopen"}
-                          onPress={() => handleButtonPress(10)}
+                          onPress={() => handleButtonFunctionPress(6)}
                         >
                           <Text style={styles.buttonTextFunction}>OPEN</Text>
                         </TouchableOpacity>
@@ -369,7 +412,7 @@ export default function App() {
                             },
                           ]}
                           key={"buttonclose"}
-                          onPress={() => handleButtonPress(9)}
+                          onPress={() => handleButtonFunctionPress(7)}
                         >
                           <Text style={styles.buttonTextFunction}>CLOSE</Text>
                         </TouchableOpacity>
