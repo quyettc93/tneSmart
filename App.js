@@ -43,7 +43,7 @@ export default function App() {
   // console.log(isHoldPressed);
   // console.log(callBinary);
   // console.log(funcBinary);
-  console.log(arrSentData);
+  // console.log(arrSentData);
 
   useEffect(() => {
     if (isConnected) {
@@ -63,11 +63,8 @@ export default function App() {
         newState[2] = "0x00";
         return newState;
       });
-
-      // Gửi dữ liệu Bluetooth
-      senDataToBluetooth();
     }
-  }, [callBinary]); // Trigger effect when callBinary or isConnected changes
+  }, [callBinary]);
 
   useEffect(() => {
     if (isConnected) {
@@ -87,9 +84,14 @@ export default function App() {
         newState[3] = formattedHexValue;
         return newState;
       });
-      senDataToBluetooth();
     }
   }, [funcBinary]);
+
+  useEffect(() => {
+    if (isConnected) {
+      senDataToBluetooth();
+    }
+  }, [arrSentData]);
 
   useEffect(() => {
     if (isConnected) {
@@ -221,7 +223,7 @@ export default function App() {
 
   const connectToDevice = async (macAddress, parsedData) => {
     try {
-      console.log(`$da ton tai{parsedData}`);
+      console.log(`$da ton tai${parsedData}`);
       const connected = await RNBluetoothClassic.connectToDevice(macAddress);
       if (connected) {
         setIsConnected(true);
@@ -272,6 +274,7 @@ export default function App() {
   const senDataToBluetooth = () => {
     RNBluetoothClassic.writeToDevice(macAddress, arrSentData)
       .then(() => {
+        console.log(`Data sent successfully ${arrSentData}`);
         setSentData(arrSentData);
       })
       .catch((error) => {
@@ -289,13 +292,13 @@ export default function App() {
         return newCallBinary;
       });
 
-      // setTimeout(() => {
-      //   setCallBinary((prevState) => {
-      //     const newState = [...prevState];
-      //     newState[numberFloor - buttonNumber] = 0; // Đặt lại giá trị về 0 sau 1 giây
-      //     return newState;
-      //   });
-      // }, 500);
+      setTimeout(() => {
+        setCallBinary((prevState) => {
+          const newState = [...prevState];
+          newState[numberFloor - buttonNumber] = 0; // Đặt lại giá trị về 0 sau 1 giây
+          return newState;
+        });
+      }, 1000);
     } else {
       Alert.alert(
         "Bluetooth not connected",
